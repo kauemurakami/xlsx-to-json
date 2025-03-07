@@ -36,37 +36,46 @@ class _ExcelToJsonPageState extends State<ExcelToJsonPage> {
 
     List<Map<String, dynamic>> jsonList = [];
 
-    // Assumindo que você está pegando a primeira planilha
+    // Obtendo a primeira planilha
     var sheet = excel.tables[excel.tables.keys.first];
 
-    // Iterar pelas linhas e colunas para extrair os valores
-    for (var row in sheet!.rows) {
+    if (sheet == null || sheet.rows.isEmpty) {
+      print("Erro: A planilha está vazia ou não foi encontrada.");
+      return;
+    }
+
+    // Pegando a primeira linha como cabeçalhos (atributos)
+    List<String> headers = [];
+    for (var cell in sheet.rows.first) {
+      headers.add(cell?.value.toString() ?? ""); // Pegando apenas o valor da célula
+    }
+
+    // Iterar a partir da segunda linha (índice 1) para extrair os dados
+    for (var i = 1; i < sheet.rows.length; i++) {
+      var row = sheet.rows[i];
       Map<String, dynamic> jsonRow = {};
-      for (var i = 0; i < row.length; i++) {
-        // Verifique se a célula não é nula
-        if (row[i] != null) {
-          jsonRow['col$i'] = row[i].toString(); // Converte tudo para String
+
+      for (var j = 0; j < row.length; j++) {
+        if (j < headers.length) {
+          jsonRow[headers[j]] = row[j]?.value.toString() ?? ""; // Pegando apenas o valor
         }
       }
+
       jsonList.add(jsonRow);
     }
 
-    // Agora você pode converter para JSON sem problemas
+    // Convertendo para JSON
     String jsonString = jsonEncode(jsonList);
 
-    // Acessando o diretório de Downloads diretamente no armazenamento externo
-    final directory = await getExternalStorageDirectory();
-
-    // Caminho do diretório de Downloads diretamente (não no diretório do app)
+    // Diretório de Downloads no armazenamento externo
     final downloadDirPath = Directory('/storage/emulated/0/Download');
 
-    // Verifique se o diretório de Downloads existe
     if (!await downloadDirPath.exists()) {
       await downloadDirPath.create(recursive: true);
     }
 
-    // Caminho do arquivo JSON na pasta Downloads
-    final jsonFilePath = '${downloadDirPath.path}/devs.json';
+    // Caminho do arquivo JSON
+    final jsonFilePath = '${downloadDirPath.path}/devs1.json';
 
     // Salvar o arquivo JSON
     final jsonFile = File(jsonFilePath);
